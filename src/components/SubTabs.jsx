@@ -9,7 +9,7 @@ function SubTabs({ tabs, activeId, onSelect }) {
           className="flex shrink-0 flex-col items-center gap-2"
         >
           <span
-            className={`block h-20 w-20 overflow-hidden rounded-full ring-2 ring-offset-2 transition-all lg:h-24 lg:w-24 ${
+            className={`block h-20 w-20 overflow-hidden rounded-xl ring-2 ring-offset-2 transition-all lg:h-24 lg:w-24 ${
               activeId === tab.id ? 'ring-[#013485]' : 'ring-transparent'
             }`}
           >

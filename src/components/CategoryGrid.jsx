@@ -3,7 +3,7 @@ import home from '../assets/categories/cat_home.png'
 import kids from '../assets/categories/cat_kids.png'
 import men from '../assets/categories/cat_men.png'
 import women from '../assets/categories/cat_women.png'
-import { resolveMediaUrl, useCmsContent } from '../hooks/useCmsContent'
+import { resolveMediaUrl, useCmsContent, useCmsLoading } from '../hooks/useCmsContent'
 
 const DEFAULT_IMAGES = { men, women, kids, home, 'eco-living': ecoLiving }
 const DEFAULT_CATEGORIES = [
@@ -16,6 +16,7 @@ const DEFAULT_CATEGORIES = [
 
 function CategoryGrid() {
   const cms = useCmsContent()
+  const loading = useCmsLoading()
   const categories = cms.shopByCategory?.items?.length ? cms.shopByCategory.items : DEFAULT_CATEGORIES
 
   return (
@@ -24,11 +25,15 @@ function CategoryGrid() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 lg:gap-4">
         {categories.map((cat) => (
           <a key={cat.id} href="#best-sellers" className="group flex flex-col items-center gap-3">
-            <img
-              src={cat.imageUrl ? resolveMediaUrl(cat.imageUrl) : DEFAULT_IMAGES[cat.id]}
-              alt={cat.label}
-              className="aspect-[262/378] w-full rounded-2xl object-cover transition-opacity group-hover:opacity-90"
-            />
+            {loading ? (
+              <div className="aspect-[262/378] w-full animate-pulse rounded-2xl bg-gray-200" />
+            ) : (
+              <img
+                src={cat.imageUrl ? resolveMediaUrl(cat.imageUrl) : DEFAULT_IMAGES[cat.id]}
+                alt={cat.label}
+                className="aspect-[262/378] w-full rounded-2xl object-cover transition-opacity group-hover:opacity-90"
+              />
+            )}
             <span className="text-xs font-bold tracking-wide text-gray-900 lg:text-sm">
               {cat.label}
             </span>

@@ -93,24 +93,24 @@ function Header() {
 
           <nav className="flex items-center gap-7">
             {MEGA_MENU.map((cat) => (
-              <a
+              <Link
                 key={cat.label}
-                href="/#shop-by-category"
+                to="/#shop-by-category"
                 onMouseEnter={() => setHoveredCategory(cat.label)}
                 className={`text-sm font-semibold tracking-wide transition-colors hover:text-[#013485] ${
                   hoveredCategory === cat.label ? 'text-[#013485]' : 'text-[#0F1E3D]'
                 }`}
               >
                 {cat.label}
-              </a>
+              </Link>
             ))}
-            <a
-              href={RENEW_LINK.href}
+            <Link
+              to={RENEW_LINK.href}
               onMouseEnter={() => setHoveredCategory(null)}
               className="text-sm font-semibold tracking-wide text-[#0F1E3D] transition-colors hover:text-[#013485]"
             >
               {RENEW_LINK.label}
-            </a>
+            </Link>
           </nav>
 
           <SearchWithOverlay className="ml-auto w-64 xl:w-80" value={query} onChange={(e) => setQuery(e.target.value)} />

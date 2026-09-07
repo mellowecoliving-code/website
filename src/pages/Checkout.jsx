@@ -12,7 +12,7 @@ function Checkout() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { cart, cartTotal, coupon, clearCart, showToast } = useStore()
-  const cartItems = Object.values(cart)
+  const cartItems = Object.entries(cart).map(([key, item]) => ({ key, ...item }))
   const finalTotal = Math.max(0, cartTotal - (coupon?.discountAmount || 0))
 
   const [addresses, setAddresses] = useState([])
@@ -63,9 +63,12 @@ function Checkout() {
     setPlacing(true)
     setError('')
 
+    // Only id + variantSku + quantity are sent — the server looks up the
+    // real price and stock from the database itself, never trusting
+    // anything else here.
     const items = cartItems.map(({ product, qty }) => ({
       id: product.id,
-      name: product.name,
+      variantSku: product.variantSku || undefined,
       quantity: qty,
     }))
 
@@ -195,15 +198,16 @@ function Checkout() {
       <section className="mb-8">
         <h2 className="mb-3 text-xs font-bold tracking-wide text-gray-500">ORDER SUMMARY</h2>
         <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
-          {cartItems.map(({ product, qty }) => (
-            <div key={product.id} className="flex items-center gap-3 p-3">
+          {cartItems.map(({ key, product, qty }) => (
+            <div key={key} className="flex items-center gap-3 p-3">
               <img src={product.img} alt={product.name} className="h-14 w-14 rounded-md object-cover" />
               <div className="flex-1">
                 <p className="text-sm text-gray-800">{product.name}</p>
+                {product.variantLabel && <p className="text-xs text-gray-500">{product.variantLabel}</p>}
                 <p className="text-xs text-gray-500">Qty {qty}</p>
               </div>
               <span className="text-sm font-semibold text-gray-900">
-                ₹{(Number(product.price.replace(/,/g, '')) * qty).toLocaleString('en-IN')}
+                ₹{(Number(product.price) * qty).toLocaleString('en-IN')}
               </span>
             </div>
           ))}

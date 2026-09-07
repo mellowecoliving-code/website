@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { getProducts } from '../api/products'
 import { validateCoupon } from '../api/coupons'
-import { getProductById } from '../data/searchIndex'
+import { toCardProduct } from '../utils/mapProduct'
 import { useAuth } from './AuthContext'
 import { syncStore } from '../api/account'
 
@@ -9,6 +10,17 @@ const RECENTLY_VIEWED_KEY = 'mellow_recently_viewed'
 const CART_KEY = 'mellow_cart'
 const WISHLIST_KEY = 'mellow_wishlist'
 const MAX_RECENTLY_VIEWED = 8
+
+// A product with variants can be in the cart multiple times at once — one
+// line per size/color combo — so the cart key isn't just the product id.
+// The base product id is always recoverable with baseProductId() below.
+function cartKeyFor(product) {
+  return product.variantSku ? `${product.id}::${product.variantSku}` : product.id
+}
+
+function baseProductId(cartKey) {
+  return cartKey.split('::')[0]
+}
 
 function loadFromStorage(key, fallback) {
   try {
@@ -63,19 +75,52 @@ export function StoreProvider({ children }) {
       isSyncing.current = true
 
       syncStore({ localCart: cart, localWishlist: wishlist, merge: true })
-        .then((data) => {
-          // Server only knows ids + qty (the catalog is static client-side
-          // data, not a DB collection) — re-attach full product details from
-          // what we already have locally, falling back to the shared catalog
-          // for ids that came from another device/session.
+        .then(async (data) => {
+          // The server only stores ids + qty — re-attach full product
+          // details from what we already have locally, falling back to a
+          // real DB lookup (batched into one request) for ids that came
+          // from another device/session.
+          const cartKeys = Object.keys(data.cart)
+          const wishlistIds = data.wishlist
+          const missingIds = new Set()
+          cartKeys.forEach((key) => {
+            if (!cart[key]?.product && !wishlist[baseProductId(key)]) missingIds.add(baseProductId(key))
+          })
+          wishlistIds.forEach((id) => {
+            if (!wishlist[id] && !cart[id]?.product) missingIds.add(id)
+          })
+
+          let fetched = {}
+          if (missingIds.size > 0) {
+            try {
+              const res = await getProducts({ ids: [...missingIds].join(',') })
+              fetched = Object.fromEntries(res.products.map((p) => [p._id, toCardProduct(p)]))
+            } catch {
+              // Leave fetched empty — those ids just won't rehydrate this time.
+            }
+          }
+
           const normalizedCart = {}
-          Object.keys(data.cart).forEach((id) => {
-            const product = cart[id]?.product || wishlist[id] || getProductById(id)
-            if (product) normalizedCart[id] = { product, qty: data.cart[id] }
+          cartKeys.forEach((key) => {
+            let product = cart[key]?.product || wishlist[baseProductId(key)]
+            if (!product) {
+              const base = fetched[baseProductId(key)]
+              const sku = key.includes('::') ? key.split('::')[1] : null
+              const variant = sku ? base?.variants?.find((v) => v.sku === sku) : null
+              product = variant
+                ? {
+                    ...base,
+                    variantSku: variant.sku,
+                    variantLabel: [variant.color, variant.size].filter(Boolean).join(' / '),
+                    stock: variant.stock,
+                  }
+                : base
+            }
+            if (product) normalizedCart[key] = { product, qty: data.cart[key] }
           })
           const normalizedWishlist = {}
-          data.wishlist.forEach((id) => {
-            const product = wishlist[id] || cart[id]?.product || getProductById(id)
+          wishlistIds.forEach((id) => {
+            const product = wishlist[id] || cart[id]?.product || fetched[id]
             if (product) normalizedWishlist[id] = product
           })
 
@@ -115,29 +160,30 @@ export function StoreProvider({ children }) {
   const clearRecentlyViewed = () => setRecentlyViewed([])
 
   const addToCart = (product) => {
+    const key = cartKeyFor(product)
     setCart((prev) => ({
       ...prev,
-      [product.id]: { product, qty: (prev[product.id]?.qty || 0) + 1 },
+      [key]: { product, qty: (prev[key]?.qty || 0) + 1 },
     }))
     trackRecentlyViewed(product)
   }
 
-  const setCartQty = (id, qty) => {
+  const setCartQty = (key, qty) => {
     setCart((prev) => {
       if (qty <= 0) {
         const next = { ...prev }
-        delete next[id]
+        delete next[key]
         return next
       }
-      if (!prev[id]) return prev
-      return { ...prev, [id]: { ...prev[id], qty } }
+      if (!prev[key]) return prev
+      return { ...prev, [key]: { ...prev[key], qty } }
     })
   }
 
-  const removeFromCart = (id) => {
+  const removeFromCart = (key) => {
     setCart((prev) => {
       const next = { ...prev }
-      delete next[id]
+      delete next[key]
       return next
     })
   }
@@ -167,11 +213,7 @@ export function StoreProvider({ children }) {
   const removeAllFromWishlist = () => setWishlist({})
 
   const cartTotal = useMemo(
-    () =>
-      Object.values(cart).reduce(
-        (sum, item) => sum + item.qty * Number(item.product.price.replace(/,/g, '')),
-        0,
-      ),
+    () => Object.values(cart).reduce((sum, item) => sum + item.qty * Number(item.product.price), 0),
     [cart],
   )
 
@@ -196,6 +238,7 @@ export function StoreProvider({ children }) {
 
   const value = {
     cart,
+    cartKeyFor,
     wishlist,
     addToCart,
     setCartQty,

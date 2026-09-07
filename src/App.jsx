@@ -36,6 +36,9 @@ import WomenInnerwearPage from './pages/WomenInnerwearPage'
 import WomenNightwearPage from './pages/WomenNightwearPage'
 import NotFound from './pages/NotFound'
 import ProductDetail from './pages/ProductDetail'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import TermsConditionsPage from './pages/TermsConditionsPage'
+import CookiesPolicyPage from './pages/CookiesPolicyPage'
 
 function AppShell() {
   const navigate = useNavigate()
@@ -70,6 +73,9 @@ function AppShell() {
         <Route path="/kids/innerwear" element={<KidsInnerwearPage />} />
         <Route path="/kids/footwears" element={<KidsFootwearPage />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms-conditions" element={<TermsConditionsPage />} />
+        <Route path="/cookies-policy" element={<CookiesPolicyPage />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />

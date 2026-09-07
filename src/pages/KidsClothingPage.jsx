@@ -1,10 +1,7 @@
-import { kidsClothingProducts, kidsClothingSubTabs } from '../data/kidsClothingCollection'
 import CollectionPage from './CollectionPage'
 
 function KidsClothingPage() {
-  return (
-    <CollectionPage title="Clothing" products={kidsClothingProducts} subTabs={kidsClothingSubTabs} />
-  )
+  return <CollectionPage title="Clothing" query={{ category: 'Kids', subcategory: 'Clothing' }} />
 }
 
 export default KidsClothingPage

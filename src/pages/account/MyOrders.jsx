@@ -57,7 +57,27 @@ function MyOrders() {
                 </span>
                 <StatusBadge status={order.status} />
               </div>
-              <p className="text-sm text-gray-600">{order.items.length} item(s)</p>
+              <div className="mb-2 divide-y divide-gray-100 border-y border-gray-100">
+                {order.items.map((item, i) => (
+                  <div key={i} className="flex items-start justify-between gap-3 py-2">
+                    <div>
+                      <p className="text-sm text-gray-800">
+                        {item.name} × {item.quantity}
+                      </p>
+                      {item.variantLabel && <p className="text-xs text-gray-400">{item.variantLabel}</p>}
+                      {item.taxInclusive !== undefined && (
+                        <p className="text-xs text-gray-400">
+                          {item.taxInclusive ? 'Price incl. GST' : 'Price excl. GST'}
+                          {item.hsnCode ? ` · HSN ${item.hsnCode}` : ''}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-sm text-gray-700">
+                      ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                ))}
+              </div>
               <p className="text-sm font-semibold text-gray-900">
                 ₹{order.totalAmount.toLocaleString('en-IN')}
               </p>

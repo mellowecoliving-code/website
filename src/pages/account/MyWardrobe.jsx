@@ -2,12 +2,13 @@ import { ChevronLeft, Shirt } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getMyOrders } from '../../api/account'
-import { getProductById } from '../../data/searchIndex'
+import { getProducts } from '../../api/products'
 
 function MyWardrobe() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [productImages, setProductImages] = useState({})
 
   useEffect(() => {
     getMyOrders()
@@ -16,10 +17,10 @@ function MyWardrobe() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Orders only store id/name/price/quantity snapshots (not images — the
-  // catalog is static client-side data, not a DB collection), so pieces are
-  // re-hydrated with real product details by id and grouped: buying the same
-  // item across two orders should read as "2 units you own," not two rows.
+  // Orders only store id/name/price/quantity snapshots (not images), so
+  // pieces are re-hydrated with real product images by id (one batched
+  // request) and grouped: buying the same item across two orders should
+  // read as "2 units you own," not two rows.
   const pieces = useMemo(() => {
     const byProduct = new Map()
     orders
@@ -37,13 +38,22 @@ function MyWardrobe() {
               name: item.name,
               qty: item.quantity,
               purchasedAt,
-              product: getProductById(item.product),
             })
           }
         })
       })
     return Array.from(byProduct.values()).sort((a, b) => (a.purchasedAt < b.purchasedAt ? 1 : -1))
   }, [orders])
+
+  useEffect(() => {
+    if (pieces.length === 0) return
+    getProducts({ ids: pieces.map((p) => p.id).join(',') })
+      .then((data) => {
+        setProductImages(Object.fromEntries(data.products.map((p) => [p._id, p.image || p.images?.[0]])))
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pieces.map((p) => p.id).join(',')])
 
   return (
     <div className="mx-auto max-w-md px-4 py-8">
@@ -80,12 +90,12 @@ function MyWardrobe() {
           {pieces.map((piece) => (
             <Link
               key={piece.id}
-              to={piece.product ? `/product/${piece.id}` : '#'}
+              to={`/product/${piece.id}`}
               className="rounded-xl border border-gray-200 p-2 hover:border-gray-300 hover:bg-gray-50"
             >
               <div className="mb-2 aspect-[397/466] w-full overflow-hidden rounded-lg bg-gray-100">
-                {piece.product ? (
-                  <img src={piece.product.img} alt={piece.name} className="h-full w-full object-cover" />
+                {productImages[piece.id] ? (
+                  <img src={productImages[piece.id]} alt={piece.name} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-gray-300">
                     <Shirt className="h-8 w-8" />

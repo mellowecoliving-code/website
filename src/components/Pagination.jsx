@@ -23,7 +23,7 @@ function Pagination({ page, totalPages, onChange }) {
         aria-label="Previous page"
         onClick={() => onChange(Math.max(1, page - 1))}
         disabled={page === 1}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -38,7 +38,7 @@ function Pagination({ page, totalPages, onChange }) {
             key={p}
             type="button"
             onClick={() => onChange(p)}
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+            className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium ${
               p === page ? 'bg-[#013485] text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -52,7 +52,7 @@ function Pagination({ page, totalPages, onChange }) {
         aria-label="Next page"
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30"
       >
         <ChevronRight className="h-4 w-4" />
       </button>

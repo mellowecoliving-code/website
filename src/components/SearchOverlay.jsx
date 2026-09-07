@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
+import { getProducts } from '../api/products'
+import { toCardProduct } from '../utils/mapProduct'
 import ProductCard from './ProductCard'
 import { useStore } from '../context/StoreContext'
-import { allProducts, searchProducts } from '../data/searchIndex'
 
 function ProductGrid({ products }) {
   return (
@@ -15,20 +17,45 @@ function ProductGrid({ products }) {
 function SearchOverlay({ query }) {
   const { recentlyViewed, clearRecentlyViewed } = useStore()
   const trimmed = query.trim()
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [defaultProducts, setDefaultProducts] = useState([])
+
+  // Debounced search against the real catalog — waits for a pause in
+  // typing before hitting the server, same idea as the CMS autosave.
+  useEffect(() => {
+    if (!trimmed) return
+    setLoading(true)
+    const timer = setTimeout(() => {
+      getProducts({ search: trimmed, limit: 8 })
+        .then((data) => setResults(data.products.map(toCardProduct)))
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [trimmed])
+
+  useEffect(() => {
+    if (trimmed) return
+    getProducts({ limit: 8 })
+      .then((data) => setDefaultProducts(data.products.map(toCardProduct)))
+      .catch(() => {})
+  }, [trimmed])
 
   if (trimmed) {
-    const results = searchProducts(trimmed)
     return (
       <div className="max-h-[70vh] overflow-y-auto p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-xs font-bold tracking-wide text-gray-500">PRODUCTS</h3>
         </div>
-        {results.length === 0 ? (
+        {loading ? (
+          <p className="py-6 text-center text-sm text-gray-500">Searching...</p>
+        ) : results.length === 0 ? (
           <p className="py-6 text-center text-sm text-gray-500">
             No products found for &ldquo;{trimmed}&rdquo;
           </p>
         ) : (
-          <ProductGrid products={results.slice(0, 8)} />
+          <ProductGrid products={results} />
         )}
       </div>
     )
@@ -54,7 +81,7 @@ function SearchOverlay({ query }) {
 
       <div>
         <h3 className="mb-3 text-xs font-bold tracking-wide text-gray-500">PRODUCTS</h3>
-        <ProductGrid products={allProducts.slice(0, 8)} />
+        <ProductGrid products={defaultProducts} />
       </div>
     </div>
   )

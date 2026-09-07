@@ -13,7 +13,7 @@ function Cart() {
   const [couponInput, setCouponInput] = useState('')
   const [couponError, setCouponError] = useState('')
 
-  const cartItems = Object.values(cart)
+  const cartItems = Object.entries(cart).map(([key, item]) => ({ key, ...item }))
   const finalTotal = Math.max(0, cartTotal - (coupon?.discountAmount || 0))
 
   const handleApplyCoupon = async () => {
@@ -66,18 +66,19 @@ function Cart() {
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px]">
         <div className="divide-y divide-gray-100 border-t border-gray-100">
-          {cartItems.map(({ product, qty }) => (
-            <div key={product.id} className="flex gap-4 py-5">
+          {cartItems.map(({ key, product, qty }) => (
+            <div key={key} className="flex gap-4 py-5">
               <img src={product.img} alt={product.name} className="h-24 w-24 shrink-0 rounded-lg object-cover" />
               <div className="flex-1">
                 <p className="text-sm text-gray-800">{product.name}</p>
-                <p className="mb-2 text-sm font-semibold text-gray-900">₹{product.price}</p>
+                {product.variantLabel && <p className="text-xs text-gray-500">{product.variantLabel}</p>}
+                <p className="mb-2 text-sm font-semibold text-gray-900">₹{Number(product.price).toLocaleString('en-IN')}</p>
                 <div className="flex w-fit items-center gap-3 rounded-full border border-gray-200 px-3 py-1.5">
-                  <button type="button" aria-label="Decrease quantity" onClick={() => setCartQty(product.id, qty - 1)}>
+                  <button type="button" aria-label="Decrease quantity" onClick={() => setCartQty(key, qty - 1)}>
                     <Minus className="h-3.5 w-3.5 text-gray-600" />
                   </button>
                   <span className="w-4 text-center text-sm font-semibold">{qty}</span>
-                  <button type="button" aria-label="Increase quantity" onClick={() => setCartQty(product.id, qty + 1)}>
+                  <button type="button" aria-label="Increase quantity" onClick={() => setCartQty(key, qty + 1)}>
                     <Plus className="h-3.5 w-3.5 text-gray-600" />
                   </button>
                 </div>
@@ -85,7 +86,7 @@ function Cart() {
               <button
                 type="button"
                 aria-label={`Remove ${product.name} from cart`}
-                onClick={() => removeFromCart(product.id)}
+                onClick={() => removeFromCart(key)}
               >
                 <Trash2 className="h-4 w-4 text-gray-400 hover:text-red-600" />
               </button>
