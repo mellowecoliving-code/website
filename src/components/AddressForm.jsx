@@ -1,3 +1,4 @@
+import { LocateFixed } from 'lucide-react'
 import { useState } from 'react'
 
 const STATES = [
@@ -26,10 +27,54 @@ function AddressForm({ initial, onSubmit, onCancel, submitting }) {
     isDefault: initial?.isDefault || false,
   })
   const [error, setError] = useState('')
+  const [locating, setLocating] = useState(false)
 
   const handleChange = (field) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  // No Google Maps API key is configured for this project, so this uses the
+  // browser's own Geolocation API plus OpenStreetMap's free Nominatim
+  // reverse-geocoding lookup (no API key required) instead of a map picker
+  // UI — it fills the same fields a map pin-drop would, just without the
+  // visual map.
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Location is not supported by this browser.')
+      return
+    }
+    setError('')
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+          )
+          if (!res.ok) throw new Error('lookup failed')
+          const data = await res.json()
+          const addr = data.address || {}
+          const matchedState = STATES.find((s) => s.toLowerCase() === (addr.state || '').toLowerCase()) || ''
+          setForm((prev) => ({
+            ...prev,
+            areaStreet: prev.areaStreet || [addr.road, addr.suburb].filter(Boolean).join(', '),
+            townCity: addr.city || addr.town || addr.village || prev.townCity,
+            state: matchedState || prev.state,
+            pincode: addr.postcode || prev.pincode,
+          }))
+        } catch {
+          setError('Could not determine your address from your location. Please fill it in manually.')
+        } finally {
+          setLocating(false)
+        }
+      },
+      () => {
+        setError('Could not access your location. Please allow location access, or fill in the address manually.')
+        setLocating(false)
+      },
+    )
   }
 
   const handleSubmit = (e) => {
@@ -45,6 +90,16 @@ function AddressForm({ initial, onSubmit, onCancel, submitting }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+      <button
+        type="button"
+        onClick={handleUseMyLocation}
+        disabled={locating}
+        className="flex items-center gap-2 rounded-full border border-[#013485] px-4 py-2 text-xs font-bold tracking-wide text-[#013485] hover:bg-blue-50 disabled:opacity-50"
+      >
+        <LocateFixed className="h-3.5 w-3.5" />
+        {locating ? 'LOCATING...' : 'USE MY LOCATION'}
+      </button>
 
       <div className="grid grid-cols-2 gap-3">
         <div>

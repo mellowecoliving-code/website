@@ -22,6 +22,7 @@ import NewArrivalsPage from './pages/NewArrivalsPage'
 import Signup from './pages/Signup'
 import Wishlist from './pages/Wishlist'
 import EcoLivingPage from './pages/EcoLivingPage'
+import HomeCategoryPage from './pages/HomeCategoryPage'
 import KidsClothingPage from './pages/KidsClothingPage'
 import KidsFootwearPage from './pages/KidsFootwearPage'
 import KidsInnerwearPage from './pages/KidsInnerwearPage'
@@ -39,6 +40,15 @@ import ProductDetail from './pages/ProductDetail'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsConditionsPage from './pages/TermsConditionsPage'
 import CookiesPolicyPage from './pages/CookiesPolicyPage'
+import ShippingPolicyPage from './pages/ShippingPolicyPage'
+import ReturnRefundPolicyPage from './pages/ReturnRefundPolicyPage'
+import SizeGuidePage from './pages/SizeGuidePage'
+import FaqsPage from './pages/FaqsPage'
+import CareInstructionsPage from './pages/CareInstructionsPage'
+import AboutUsPage from './pages/AboutUsPage'
+import OurStoryPage from './pages/OurStoryPage'
+import SustainabilityPage from './pages/SustainabilityPage'
+import OurProcessPage from './pages/OurProcessPage'
 
 function AppShell() {
   const navigate = useNavigate()
@@ -70,12 +80,22 @@ function AppShell() {
         <Route path="/kids/clothing" element={<KidsClothingPage />} />
         <Route path="/kids/nightwear" element={<KidsNightwearPage />} />
         <Route path="/eco-living" element={<EcoLivingPage />} />
+        <Route path="/home" element={<HomeCategoryPage />} />
         <Route path="/kids/innerwear" element={<KidsInnerwearPage />} />
         <Route path="/kids/footwears" element={<KidsFootwearPage />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/terms-conditions" element={<TermsConditionsPage />} />
         <Route path="/cookies-policy" element={<CookiesPolicyPage />} />
+        <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+        <Route path="/return-refund-policy" element={<ReturnRefundPolicyPage />} />
+        <Route path="/size-guide" element={<SizeGuidePage />} />
+        <Route path="/faqs" element={<FaqsPage />} />
+        <Route path="/care-instructions" element={<CareInstructionsPage />} />
+        <Route path="/about-us" element={<AboutUsPage />} />
+        <Route path="/our-story" element={<OurStoryPage />} />
+        <Route path="/sustainability" element={<SustainabilityPage />} />
+        <Route path="/our-process" element={<OurProcessPage />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />

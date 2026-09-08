@@ -1,30 +1,41 @@
 import { Fragment } from 'react'
 import { FaFacebookF, FaInstagram, FaPinterestP, FaXTwitter, FaYoutube } from 'react-icons/fa6'
+import { Link } from 'react-router-dom'
 import { useStore } from '../context/StoreContext'
 import { resolveMediaUrl, useCmsContent } from '../hooks/useCmsContent'
 
 // Mirrors the main nav structure — not CMS-editable on purpose.
 const CATEGORY_LINKS = [
-  { label: 'Women', href: '/#shop-by-category' },
-  { label: 'Men', href: '/#shop-by-category' },
-  { label: 'Kids', href: '/#shop-by-category' },
-  { label: 'Home', href: '/#shop-by-category' },
-  { label: 'Eco-living', href: '/#shop-by-category' },
+  { label: 'Women', href: '/women/clothing' },
+  { label: 'Men', href: '/men/clothing' },
+  { label: 'Kids', href: '/kids/clothing' },
+  { label: 'Home', href: '/home' },
+  { label: 'Eco-living', href: '/eco-living' },
   { label: 'Bestseller', href: '/best-sellers' },
   { label: 'New Arrivals', href: '/new-arrivals' },
   { label: 'Renew', href: '/#how-it-works' },
 ]
 
-// Not CMS-editable — these link to pages that don't exist yet, so there's
-// nothing meaningful for an admin to configure beyond the label text.
+// Not CMS-editable — same reasoning as CATEGORY_LINKS above.
 const COLUMNS = [
   {
     title: 'CUSTOMER CARE',
-    links: ['Shipping Policy', 'Return & Refund Policy', 'Size Guide', 'FAQs', 'Care Instructions'],
+    links: [
+      { label: 'Shipping Policy', href: '/shipping-policy' },
+      { label: 'Return & Refund Policy', href: '/return-refund-policy' },
+      { label: 'Size Guide', href: '/size-guide' },
+      { label: 'FAQs', href: '/faqs' },
+      { label: 'Care Instructions', href: '/care-instructions' },
+    ],
   },
   {
     title: 'ABOUT',
-    links: ['About Us', 'Our Story', 'Sustainability', 'Our Process'],
+    links: [
+      { label: 'About Us', href: '/about-us' },
+      { label: 'Our Story', href: '/our-story' },
+      { label: 'Sustainability', href: '/sustainability' },
+      { label: 'Our Process', href: '/our-process' },
+    ],
   },
 ]
 
@@ -70,9 +81,9 @@ function Footer() {
             <ul className="flex flex-col gap-2.5">
               {CATEGORY_LINKS.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href || '#'} className="text-sm text-gray-600 hover:text-gray-900">
+                  <Link to={link.href || '#'} className="text-sm text-gray-600 hover:text-gray-900">
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -83,10 +94,10 @@ function Footer() {
               <h3 className="mb-4 text-xs font-bold tracking-wide text-gray-900">{col.title}</h3>
               <ul className="flex flex-col gap-2.5">
                 {col.links.map((link) => (
-                  <li key={link}>
-                    <a href="#" onClick={notify(link)} className="text-sm text-gray-600 hover:text-gray-900">
-                      {link}
-                    </a>
+                  <li key={link.label}>
+                    <Link to={link.href} className="text-sm text-gray-600 hover:text-gray-900">
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>

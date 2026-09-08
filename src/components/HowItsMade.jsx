@@ -1,8 +1,8 @@
-import { Hand, Lightbulb, PenTool, Recycle, Sparkles } from 'lucide-react'
+import { Hand, Leaf, Lightbulb, PenTool, Recycle } from 'lucide-react'
 import illustration from '../assets/sections/howmade_illustration.png'
 import { resolveMediaUrl, useCmsContent } from '../hooks/useCmsContent'
 
-const ICONS = [Lightbulb, PenTool, Sparkles, Hand, Recycle]
+const ICONS = [Lightbulb, PenTool, Leaf, Hand, Recycle]
 
 const DEFAULT_STEPS = [
   {
@@ -45,12 +45,20 @@ function HowItsMade() {
           <img src={illustrationSrc} alt="How it's made illustration" className="w-full object-contain" />
         </div>
         <div className="flex flex-col gap-6">
-          {STEPS.map((step) => {
+          {STEPS.map((step, i) => {
             const Icon = step.icon
             return (
               <div key={step.title} className="flex gap-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#013485] text-white">
-                  <Icon className="h-4 w-4" />
+                <div className="relative shrink-0">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#013485] text-white">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  {/* Dotted connector down to the next icon — spans the fixed
+                      gap-6 (24px) between rows, so it lines up regardless of
+                      how many lines this row's description wraps to. */}
+                  {i < STEPS.length - 1 && (
+                    <div className="absolute left-1/2 top-9 h-6 -translate-x-1/2 border-l-2 border-dotted border-[#013485]/40" />
+                  )}
                 </div>
                 <div>
                   <h3 className="mb-1 text-sm font-bold text-[#013485]">{step.title}</h3>

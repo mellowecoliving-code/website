@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import ecoLiving from '../assets/categories/cat_eco-living.png'
 import home from '../assets/categories/cat_home.png'
 import kids from '../assets/categories/cat_kids.png'
@@ -6,6 +7,15 @@ import women from '../assets/categories/cat_women.png'
 import { resolveMediaUrl, useCmsContent, useCmsLoading } from '../hooks/useCmsContent'
 
 const DEFAULT_IMAGES = { men, women, kids, home, 'eco-living': ecoLiving }
+// Each tile's real landing page — mirrors the mega-menu's first linked
+// subcategory per category (see client/src/data/megaMenu.js).
+const CATEGORY_LINKS = {
+  men: '/men/clothing',
+  women: '/women/clothing',
+  kids: '/kids/clothing',
+  home: '/home',
+  'eco-living': '/eco-living',
+}
 const DEFAULT_CATEGORIES = [
   { id: 'men', label: 'MEN' },
   { id: 'women', label: 'WOMEN' },
@@ -24,7 +34,11 @@ function CategoryGrid() {
       <h2 className="mb-6 text-xl font-bold text-gray-900 lg:text-2xl">SHOP BY CATEGORY</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 lg:gap-4">
         {categories.map((cat) => (
-          <a key={cat.id} href="#best-sellers" className="group flex flex-col items-center gap-3">
+          <Link
+            key={cat.id}
+            to={CATEGORY_LINKS[cat.id] || '#shop-by-category'}
+            className="group flex flex-col items-center gap-3"
+          >
             {loading ? (
               <div className="aspect-[262/378] w-full animate-pulse rounded-2xl bg-gray-200" />
             ) : (
@@ -37,7 +51,7 @@ function CategoryGrid() {
             <span className="text-xs font-bold tracking-wide text-gray-900 lg:text-sm">
               {cat.label}
             </span>
-          </a>
+          </Link>
         ))}
       </div>
     </section>

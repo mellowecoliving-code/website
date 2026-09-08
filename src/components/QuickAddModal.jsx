@@ -1,14 +1,18 @@
-import { Check, ShoppingBag, X } from 'lucide-react'
+import { Heart, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { useStore } from '../context/StoreContext'
 import { COLOR_SWATCHES } from '../utils/colorSwatches'
 
 function QuickAddModal({ product, onClose }) {
-  const { addToCart, showToast } = useStore()
+  const { addToCart, toggleWishlist, isWishlisted, showToast } = useStore()
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
-  const [justAdded, setJustAdded] = useState(false)
 
+  const hasVariants = product.variants.length > 0
   const sizes = useMemo(() => [...new Set(product.variants.map((v) => v.size).filter(Boolean))], [product])
   const colors = useMemo(() => [...new Set(product.variants.map((v) => v.color).filter(Boolean))], [product])
 
@@ -20,22 +24,33 @@ function QuickAddModal({ product, onClose }) {
     }
   }, [product])
 
-  const selectedVariant = product.variants.find(
-    (v) => (!sizes.length || v.size === selectedSize) && (!colors.length || v.color === selectedColor),
-  )
-  const outOfStock = !selectedVariant || selectedVariant.stock <= 0
+  const selectedVariant = hasVariants
+    ? product.variants.find(
+        (v) => (!sizes.length || v.size === selectedSize) && (!colors.length || v.color === selectedColor),
+      )
+    : null
+  // A product with no variants at all just uses its own stock; one with
+  // variants needs an actual (in-stock) selection made.
+  const outOfStock = hasVariants ? !selectedVariant || selectedVariant.stock <= 0 : (product.stock ?? 0) <= 0
+  const wishlisted = isWishlisted(product.id)
 
-  const handleAdd = () => {
+  const cartProduct = () =>
+    hasVariants
+      ? {
+          ...product,
+          variantSku: selectedVariant.sku,
+          variantLabel: [selectedVariant.color, selectedVariant.size].filter(Boolean).join(' / '),
+          stock: selectedVariant.stock,
+        }
+      : product
+
+  const handleBuyNow = () => {
     if (outOfStock) return
-    addToCart({
-      ...product,
-      variantSku: selectedVariant.sku,
-      variantLabel: [selectedVariant.color, selectedVariant.size].filter(Boolean).join(' / '),
-      stock: selectedVariant.stock,
+    addToCart(cartProduct())
+    onClose()
+    navigate(isAuthenticated ? '/checkout' : '/login', {
+      state: !isAuthenticated ? { from: '/checkout' } : undefined,
     })
-    showToast(`${product.name} added to cart`)
-    setJustAdded(true)
-    setTimeout(onClose, 700)
   }
 
   return (
@@ -55,40 +70,16 @@ function QuickAddModal({ product, onClose }) {
           </button>
         </div>
 
-        {colors.length > 0 && (
-          <div className="mb-4">
-            <p className="mb-2 text-xs font-semibold tracking-wide text-gray-500">
-              COLOR{selectedColor ? `: ${selectedColor}` : ''}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {colors.map((c) => {
-                const hasStock = product.variants.some((v) => v.color === c && v.stock > 0)
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setSelectedColor(c)}
-                    disabled={!hasStock}
-                    style={{ background: COLOR_SWATCHES[c] || '#cccccc' }}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium text-white transition-all ${
-                      selectedColor === c
-                        ? 'border-[#013485] ring-2 ring-[#013485] ring-offset-2'
-                        : hasStock
-                          ? 'border-transparent hover:opacity-90'
-                          : 'border-transparent opacity-40 line-through'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
         {sizes.length > 0 && (
           <div className="mb-4">
-            <p className="mb-2 text-xs font-semibold tracking-wide text-gray-500">SIZE</p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                Size : <span className="font-medium text-gray-800">{selectedSize || '—'}</span>
+              </p>
+              <Link to="/size-guide" onClick={onClose} className="text-xs font-medium text-[#013485] hover:underline">
+                Size Guide
+              </Link>
+            </div>
             <div className="flex flex-wrap gap-2">
               {sizes.map((s) => {
                 const hasStock = product.variants.some((v) => v.size === s && v.stock > 0)
@@ -114,17 +105,66 @@ function QuickAddModal({ product, onClose }) {
           </div>
         )}
 
+        {colors.length > 0 && (
+          <div className="mb-5">
+            <p className="mb-2 text-xs text-gray-500">
+              Color : <span className="font-medium text-gray-800">{selectedColor || '—'}</span>
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              {colors.map((c) => {
+                const hasStock = product.variants.some((v) => v.color === c && v.stock > 0)
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setSelectedColor(c)}
+                    disabled={!hasStock}
+                    aria-label={c}
+                    title={c}
+                    style={{ background: COLOR_SWATCHES[c] || '#cccccc' }}
+                    className={`h-7 w-7 shrink-0 rounded-full border transition-all ${
+                      selectedColor === c
+                        ? 'border-[#013485] ring-2 ring-[#013485] ring-offset-2'
+                        : hasStock
+                          ? 'border-gray-300 hover:opacity-90'
+                          : 'border-gray-200 opacity-30'
+                    }`}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         <button
           type="button"
           disabled={outOfStock}
-          onClick={handleAdd}
-          className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-xs font-bold tracking-wide text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-            justAdded ? 'bg-green-600' : 'bg-[#013485] hover:bg-[#012a6b]'
-          }`}
+          onClick={handleBuyNow}
+          className="w-full rounded-full bg-[#013485] py-3 text-xs font-bold tracking-wide text-white transition-colors hover:bg-[#012a6b] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {justAdded ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
-          {justAdded ? 'ADDED' : outOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+          {outOfStock ? 'OUT OF STOCK' : 'BUY NOW'}
         </button>
+
+        <div className="mt-2.5 flex items-center gap-2.5">
+          <Link
+            to={`/product/${product.id}`}
+            onClick={onClose}
+            className="flex flex-1 items-center justify-center rounded-full bg-blue-50 py-3 text-xs font-bold tracking-wide text-[#013485] hover:bg-blue-100"
+          >
+            MORE INFO
+          </Link>
+          <button
+            type="button"
+            aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            onClick={() => {
+              toggleWishlist(product)
+              showToast(wishlisted ? `${product.name} removed from wishlist` : `${product.name} added to wishlist`)
+            }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-300 hover:border-gray-900"
+          >
+            <Heart className={`h-4 w-4 ${wishlisted ? 'text-red-500' : 'text-gray-700'}`} fill={wishlisted ? 'currentColor' : 'none'} />
+          </button>
+        </div>
       </div>
     </div>
   )
